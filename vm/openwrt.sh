@@ -157,7 +157,7 @@ function msg_error() {
 }
 
 function pve_check() {
-  if ! pveversion | grep -Eq "pve-manager/8.[1-3]"; then
+  if ! pveversion | grep -Eq "pve-manager/8\.[1-3](\.[0-9]+)*"; then
     msg_error "This version of Proxmox Virtual Environment is not supported"
     echo -e "Requires Proxmox Virtual Environment Version 8.1 or later."
     echo -e "Exiting..."
@@ -475,7 +475,7 @@ qm set $VMID \
   -efidisk0 ${DISK0_REF},efitype=4m,size=4M \
   -scsi0 ${DISK1_REF},size=512M \
   -boot order=scsi0 \
-  -tags proxmox-helper-scripts \
+  -tags community-script \
   -description "<div align='center'><a href='https://Helper-Scripts.com'><img src='https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/images/logo-81x112.png'/></a>
 
   # OpenWRT
@@ -498,8 +498,6 @@ send_line_to_vm "uci set network.lan.device=eth0"
 send_line_to_vm "uci set network.lan.proto=static"
 send_line_to_vm "uci set network.lan.ipaddr=${LAN_IP_ADDR}"
 send_line_to_vm "uci set network.lan.netmask=${LAN_NETMASK}"
-send_line_to_vm "uci set firewall.@zone[1].input='ACCEPT'"
-send_line_to_vm "uci set firewall.@zone[1].forward='ACCEPT'"
 send_line_to_vm "uci commit"
 send_line_to_vm "halt"
 msg_ok "Network interfaces have been successfully configured."
