@@ -17,29 +17,58 @@ All LXC instances created using this repository come pre-installed with Midnight
 Do not break established syntax in this file, as it is automatically updated by a Github Workflow
 
 
+## 2025-02-06
+
+### Changed
+
+### ✨ New Scripts
+
+- New Script: Paperless-AI [@MickLesk](https://github.com/MickLesk) ([#2093](https://github.com/community-scripts/ProxmoxVE/pull/2093))
+- New Script: Duplicati [@tremor021](https://github.com/tremor021) ([#2052](https://github.com/community-scripts/ProxmoxVE/pull/2052))
+- New Script: Apache Tika [@andygrunwald](https://github.com/andygrunwald) ([#2079](https://github.com/community-scripts/ProxmoxVE/pull/2079))
+
+### 🚀 Updated Scripts
+
+- Fix: Alpine IT-Tools Update [@MickLesk](https://github.com/MickLesk) ([#2067](https://github.com/community-scripts/ProxmoxVE/pull/2067))
+- Fix: Pocket-ID Change link to GH Repo [@michelroegl-brunner](https://github.com/michelroegl-brunner) ([#2082](https://github.com/community-scripts/ProxmoxVE/pull/2082))
+
+### 🌐 Website
+
+- Refactor JSON generator buttons layout for better alignment and consistency [@BramSuurdje](https://github.com/BramSuurdje) ([#2106](https://github.com/community-scripts/ProxmoxVE/pull/2106))
+- Website: Refactor Footer for improved layout and styling consistency [@BramSuurdje](https://github.com/BramSuurdje) ([#2107](https://github.com/community-scripts/ProxmoxVE/pull/2107))
+- Website: Update Footer for Json-Editor & Api [@MickLesk](https://github.com/MickLesk) ([#2100](https://github.com/community-scripts/ProxmoxVE/pull/2100))
+- Website: Add Download for json-editor [@MickLesk](https://github.com/MickLesk) ([#2099](https://github.com/community-scripts/ProxmoxVE/pull/2099))
+- Radicale: Provide additional information about configuration [@tremor021](https://github.com/tremor021) ([#2072](https://github.com/community-scripts/ProxmoxVE/pull/2072))
+
 ## 2025-02-05
 
 ### Changed
 
 ### ✨ New Scripts
 
+- New Script: Zerotier Controller [@tremor021](https://github.com/tremor021) ([#1928](https://github.com/community-scripts/ProxmoxVE/pull/1928))
+- New Script: Radicale [@tremor021](https://github.com/tremor021) ([#1941](https://github.com/community-scripts/ProxmoxVE/pull/1941))
 - New Script: seelf [@tremor021](https://github.com/tremor021) ([#2023](https://github.com/community-scripts/ProxmoxVE/pull/2023))
 - New Script: Crafty-Controller [@CrazyWolf13](https://github.com/CrazyWolf13) ([#1926](https://github.com/community-scripts/ProxmoxVE/pull/1926))
 - New script: Koillection [@bvdberg01](https://github.com/bvdberg01) ([#2031](https://github.com/community-scripts/ProxmoxVE/pull/2031))
-- New Script: Radicale [@tremor021](https://github.com/tremor021) ([#1941](https://github.com/community-scripts/ProxmoxVE/pull/1941))
 
 ### 🚀 Updated Scripts
 
 - Bugfix: Jellyseerr pnpm Version [@vidonnus](https://github.com/vidonnus) ([#2033](https://github.com/community-scripts/ProxmoxVE/pull/2033))
+- Radicale: Fixed missing htpasswd flag [@tremor021](https://github.com/tremor021) ([#2065](https://github.com/community-scripts/ProxmoxVE/pull/2065))
+- [API] Update build.func / Improve error messages #2 [@michelroegl-brunner](https://github.com/michelroegl-brunner) ([#2050](https://github.com/community-scripts/ProxmoxVE/pull/2050))
+- [API] Update create-lxc.sh / Improve error messages #1 [@michelroegl-brunner](https://github.com/michelroegl-brunner) ([#2049](https://github.com/community-scripts/ProxmoxVE/pull/2049))
 - Feature: Element Synapse: add option to enter server name during LXC installation [@tremor021](https://github.com/tremor021) ([#2038](https://github.com/community-scripts/ProxmoxVE/pull/2038))
 
 ### 🌐 Website
 
+- Paperless NGX: Mark it as updateable [@andygrunwald](https://github.com/andygrunwald) ([#2070](https://github.com/community-scripts/ProxmoxVE/pull/2070))
 - Bump vitest from 2.1.6 to 2.1.9 in /frontend [@dependabot[bot]](https://github.com/dependabot[bot]) ([#2042](https://github.com/community-scripts/ProxmoxVE/pull/2042))
 
 ### 🧰 Maintenance
 
 - [API] Add API backend code [@michelroegl-brunner](https://github.com/michelroegl-brunner) ([#2040](https://github.com/community-scripts/ProxmoxVE/pull/2040))
+- Update auto-update-app-headers.yml: Enable auto approval [@michelroegl-brunner](https://github.com/michelroegl-brunner) ([#2057](https://github.com/community-scripts/ProxmoxVE/pull/2057))
 
 ## 2025-02-04
 
