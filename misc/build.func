@@ -13,6 +13,7 @@ variables() {
   METHOD="default"                   # sets the METHOD variable to "default", used for the API call.
   RANDOM_UUID="$(cat /proc/sys/kernel/random/uuid)" # generates a random UUID and sets it to the RANDOM_UUID variable.
 }
+
 source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func)
 
 # This function sets various color variables using ANSI escape codes for formatting text in the terminal.
@@ -68,12 +69,14 @@ catch_errors() {
 
 # This function is called when an error occurs. It receives the exit code, line number, and command that caused the error, and displays an error message.
 error_handler() {
+  source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func)																															   
   if [ -n "$SPINNER_PID" ] && ps -p $SPINNER_PID > /dev/null; then kill $SPINNER_PID > /dev/null; fi
   printf "\e[?25h"
   local exit_code="$?"
   local line_number="$1"
   local command="$2"
   local error_message="${RD}[ERROR]${CL} in line ${RD}$line_number${CL}: exit code ${RD}$exit_code${CL}: while executing command ${YW}$command${CL}"
+  post_update_to_api "failed" "${command}"									  
   echo -e "\n$error_message\n"
 }
 
@@ -913,6 +916,7 @@ install_script() {
       header_info
       echo -e "${ADVANCED}${BOLD}${RD}Using Advanced Settings on node $PVEHOST_NAME${CL}"
       METHOD="advanced"
+      base_settings
       advanced_settings
       break
       ;;
@@ -953,7 +957,8 @@ check_container_resources() {
   if [[ "$current_ram" -lt "$var_ram" ]] || [[ "$current_cpu" -lt "$var_cpu" ]]; then
     echo -e "\n${INFO}${HOLD} ${GN}Required: ${var_cpu} CPU, ${var_ram}MB RAM ${CL}| ${RD}Current: ${current_cpu} CPU, ${current_ram}MB RAM${CL}"
     echo -e "${YWB}Please ensure that the ${APP} LXC is configured with at least ${var_cpu} vCPU and ${var_ram} MB RAM for the build process.${CL}\n"
-    read -r -p "${INFO}${HOLD} May cause data loss! ${INFO} Continue update with under-provisioned LXC? <yes/No>  " prompt
+    echo -ne "${INFO}${HOLD} May cause data loss! ${INFO} Continue update with under-provisioned LXC? <yes/No>  "
+    read -r prompt
     # Check if the input is 'yes', otherwise exit with status 1
     if [[ ! ${prompt,,} =~ ^(yes)$ ]]; then
       echo -e "${CROSS}${HOLD} ${YWB}Exiting based on user input.${CL}"
@@ -972,7 +977,8 @@ check_container_storage() {
   if (( usage > 80 )); then
     # Prompt the user for confirmation to continue
     echo -e "${INFO}${HOLD} ${YWB}Warning: Storage is dangerously low (${usage}%).${CL}"
-    read -r -p "Continue anyway? <y/N>  " prompt
+    echo -ne "Continue anyway? <y/N>  "
+    read -r prompt
     # Check if the input is 'y' or 'yes', otherwise exit with status 1
     if [[ ! ${prompt,,} =~ ^(y|yes)$ ]]; then
       echo -e "${CROSS}${HOLD}${YWB}Exiting based on user input.${CL}"
@@ -1054,7 +1060,7 @@ build_container() {
     $PW
   "
   # This executes create_lxc.sh and creates the container and .conf file
-  bash -c "$(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/create_lxc.sh)" || exit
+  bash -c "$(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/create_lxc.sh)" || exit $?
 
   LXC_CONFIG=/etc/pve/lxc/${CTID}.conf
   if [ "$CT_TYPE" == "0" ]; then
@@ -1116,7 +1122,7 @@ http://dl-cdn.alpinelinux.org/alpine/latest-stable/community
 EOF'
     pct exec "$CTID" -- ash -c "apk add bash >/dev/null"
   fi
-  lxc-attach -n "$CTID" -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/$var_install.sh)" || exit
+  lxc-attach -n "$CTID" -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/$var_install.sh)" || exit $?
 
 }
 
@@ -1166,7 +1172,32 @@ EOF
   post_update_to_api "done" "none"
 }
 
-trap 'post_update_to_api "failed" "unknown error"' EXIT
-trap 'post_update_to_api "failed" "SIG INTERUPT"' SIGINT 
-trap 'post_update_to_api "failed" "SIG TERM"' SIGTERM
+
+exit_script() {
+  exit_code=$?  # Capture the exit status of the last executed command
+  #200 exit codes indicate error in create_lxc.sh
+  #100 exit codes indicate error in install.func
+
+if [ $exit_code -ne 0 ]; then  # Check if exit code is nonzero
+    case $exit_code in
+        200) post_update_to_api "failed" "create_lxc.sh: Error during LXC creation" ;;
+        201) post_update_to_api "failed" "create_lxc.sh Invalid Storage class" ;;
+        202) post_update_to_api "failed" "create_lxc.sh Invalid Menu aborted" ;;
+        203) post_update_to_api "failed" "create_lxc.sh CTID was unset" ;;
+        204) post_update_to_api "failed" "create_lxc.sh PCT_OSTYPE was unset" ;;
+        205) post_update_to_api "failed" "create_lxc.sh ID cannot be less than 100" ;;
+        206) post_update_to_api "failed" "create_lxc.sh ID already in use" ;;
+        207) post_update_to_api "failed" "create_lxc.sh Template not found" ;;
+        208) post_update_to_api "failed" "create_lxc.sh Error downloading template" ;;
+        101) post_update_to_api "failed" "create_lxc.sh No Network connection" ;;
+        *)   post_update_to_api "failed" "Unknown error, exit code: $exit_code" ;;
+    esac
+fi
+}
+
+
+trap 'exit_script' EXIT
+trap 'post_update_to_api "failed" "$BASH_COMMAND"' ERR
+trap 'post_update_to_api "failed" "INTERRUPTED"' SIGINT 
+trap 'post_update_to_api "failed" "TERMINATED"' SIGTERM
 

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
 # Copyright (c) 2021-2025 tteck
-# Author: tteck (tteckster) | Co-Author: MickLesk (Canbiz)
+# Author: tteck (tteckster) | Co-Author: MickLesk (Canbiz) | Co-Author: CrazyWolf13
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://homarr.dev/
 
-# App Default Values
 APP="Homarr"
 var_tags="arr;dashboard"
 var_cpu="2"
@@ -15,11 +14,8 @@ var_os="debian"
 var_version="12"
 var_unprivileged="1"
 
-# App Output & Base Settings
 header_info "$APP"
-base_settings
 
-# Core
 variables
 color
 catch_errors
@@ -42,7 +38,7 @@ fi
   RELEASE=$(curl -s https://api.github.com/repos/homarr-labs/homarr/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
   if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
 
-    msg_info "Stopping Services"
+    msg_info "Stopping Services (Patience)"
     systemctl stop homarr
     msg_ok "Services Stopped"
 
@@ -60,9 +56,23 @@ fi
     mv /opt/homarr-data-backup/.env /opt/homarr/.env
     cd /opt/homarr
     pnpm install &>/dev/null
-    pnpm run db:migration:sqlite:run &>/dev/null
     pnpm build &>/dev/null
-    mkdir build
+    cp /opt/homarr/apps/nextjs/next.config.ts .
+    cp /opt/homarr/apps/nextjs/package.json .
+    cp -r /opt/homarr/packages/db/migrations /opt/homarr_db/migrations
+    cp -r /opt/homarr/apps/nextjs/.next/standalone/* /opt/homarr
+    mkdir -p /appdata/redis
+    cp /opt/homarr/packages/redis/redis.conf /opt/homarr/redis.conf
+    rm /etc/nginx/nginx.conf
+    mkdir -p /etc/nginx/templates
+    cp /opt/homarr/nginx.conf /etc/nginx/templates/nginx.conf
+
+    mkdir -p /opt/homarr/apps/cli
+    cp /opt/homarr/packages/cli/cli.cjs /opt/homarr/apps/cli/cli.cjs
+    echo $'#!/bin/bash\ncd /opt/homarr/apps/cli && node ./cli.cjs "$@"' > /usr/bin/homarr
+    chmod +x /usr/bin/homarr
+    
+    mkdir /opt/homarr/build
     cp ./node_modules/better-sqlite3/build/Release/better_sqlite3.node ./build/better_sqlite3.node
     echo "${RELEASE}" >/opt/${APP}_version.txt
     msg_ok "Updated ${APP}"
@@ -84,4 +94,4 @@ description
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:3000${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:7575${CL}"
