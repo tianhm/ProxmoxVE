@@ -18,7 +18,8 @@ All LXC instances created using this repository come pre-installed with Midnight
 
 ### 🆕 New Scripts
 
-  - Huntarr ([#5249](https://github.com/community-scripts/ProxmoxVE/pull/5249))
+  - FileBrowser Quantum [@MickLesk](https://github.com/MickLesk) ([#5248](https://github.com/community-scripts/ProxmoxVE/pull/5248))
+- Huntarr ([#5249](https://github.com/community-scripts/ProxmoxVE/pull/5249))
 
 ### 🚀 Updated Scripts
 
@@ -30,6 +31,7 @@ All LXC instances created using this repository come pre-installed with Midnight
 
   - #### 🔧 Refactor
 
+    - Refactor all VM's to same logic & functions [@MickLesk](https://github.com/MickLesk) ([#5254](https://github.com/community-scripts/ProxmoxVE/pull/5254))
     - upgrade old Scriptcalls to new tools.func calls [@MickLesk](https://github.com/MickLesk) ([#5242](https://github.com/community-scripts/ProxmoxVE/pull/5242))
 
 ## 2025-06-17
