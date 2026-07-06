@@ -4641,66 +4641,6 @@ EOF
     fi
   fi
 
-  # Interactive Container Update Check
-  if [[ "${DOCKER_SKIP_UPDATES:-}" != "true" ]] && [ "$docker_installed" = true ] && ! _docker_is_noninteractive; then
-    msg_info "Checking for container updates"
-
-    # Get list of running containers with update status
-    local containers_with_updates=()
-    local container_info=()
-    local index=1
-
-    while IFS= read -r container; do
-      local name=$(echo "$container" | awk '{print $1}')
-      local image=$(echo "$container" | awk '{print $2}')
-      local current_digest=$(docker inspect "$name" --format='{{.Image}}' 2>/dev/null | cut -d':' -f2 | cut -c1-12)
-
-      # Pull latest image digest (ignore failures, e.g. local-only images or registry/permission issues)
-      docker pull "$image" >/dev/null 2>&1 || true
-      local latest_digest=$(docker inspect "$image" --format='{{.Id}}' 2>/dev/null | cut -d':' -f2 | cut -c1-12)
-
-      if [ -n "$latest_digest" ] && [ "$current_digest" != "$latest_digest" ]; then
-        containers_with_updates+=("$name")
-        container_info+=("${index}) ${name} (${image})")
-        ((index++))
-      fi
-    done < <(docker ps --format '{{.Names}} {{.Image}}')
-
-    if [ ${#containers_with_updates[@]} -gt 0 ]; then
-      echo ""
-      echo "${TAB3}Container updates available:"
-      for info in "${container_info[@]}"; do
-        echo "${TAB3}  $info"
-      done
-      echo ""
-      read -r -p "${TAB3}Select containers to update (e.g., 1,3,5 or 'all' or 'none'): " selection
-
-      if [[ ${selection,,} == "all" ]]; then
-        for container in "${containers_with_updates[@]}"; do
-          msg_info "Updating container: $container"
-          docker stop "$container"
-          docker rm "$container"
-          # Note: This requires the original docker run command - best to recreate via compose
-          msg_ok "Stopped and removed $container (please recreate with updated image)"
-        done
-      elif [[ ${selection,,} != "none" ]]; then
-        IFS=',' read -ra SELECTED <<<"$selection"
-        for num in "${SELECTED[@]}"; do
-          num=$(echo "$num" | xargs) # trim whitespace
-          if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#containers_with_updates[@]}" ]; then
-            container="${containers_with_updates[$((num - 1))]}"
-            msg_info "Updating container: $container"
-            docker stop "$container"
-            docker rm "$container"
-            msg_ok "Stopped and removed $container (please recreate with updated image)"
-          fi
-        done
-      fi
-    else
-      msg_ok "All containers are up-to-date"
-    fi
-  fi
-
   msg_ok "Docker setup completed"
 }
 
