@@ -4454,7 +4454,9 @@ setup_composer() {
 #   - Uses stable distro packages by default
 #   - Migrates from get.docker.com to repository-based installation
 #   - Updates Docker Engine if newer version available
-#   - Interactive container update with multi-select
+#   - Interactive per-container update prompt (Y/N, 60 s auto-no)
+#   - Compose-managed containers: full restart via docker compose
+#   - Standalone containers: image pull only, no destructive stop/rm
 #   - Portainer installation and update support
 #   - Set DOCKER_NONINTERACTIVE=1 to skip interactive prompts (CI/unattended)
 # ------------------------------------------------------------------------------
@@ -4638,6 +4640,86 @@ EOF
 
       LOCAL_IP=$(hostname -I | awk '{print $1}')
       msg_ok "Installed Portainer (http://${LOCAL_IP}:9000)"
+    fi
+  fi
+
+  # Container Update Check
+  # - Skipped entirely when running unattended / non-interactive
+  # - Compose-managed containers: offered via Y/N → docker compose pull + up -d
+  # - Standalone containers: offered via Y/N → image pull only (no stop/rm)
+  if [ "$docker_installed" = true ] && ! _docker_is_noninteractive; then
+    msg_info "Checking for container updates"
+
+    local name image compose_workdir compose_service current_digest latest_digest
+    local compose_updates=()
+    local standalone_updates=()
+
+    while IFS= read -r line; do
+      name=$(echo "$line" | awk '{print $1}')
+      image=$(echo "$line" | awk '{print $2}')
+
+      # Portainer containers are handled by the dedicated block above
+      [[ "$name" == "portainer" || "$name" == "portainer_agent" ]] && continue
+
+      current_digest=$(docker inspect "$name" --format='{{.Image}}' 2>/dev/null | cut -d':' -f2 | cut -c1-12)
+      docker pull "$image" >/dev/null 2>&1 || continue
+      latest_digest=$(docker inspect "$image" --format='{{.Id}}' 2>/dev/null | cut -d':' -f2 | cut -c1-12)
+      [[ -z "$latest_digest" || "$current_digest" == "$latest_digest" ]] && continue
+
+      compose_workdir=$(docker inspect "$name" \
+        --format='{{index .Config.Labels "com.docker.compose.project.working_dir"}}' 2>/dev/null || true)
+      compose_service=$(docker inspect "$name" \
+        --format='{{index .Config.Labels "com.docker.compose.service"}}' 2>/dev/null || true)
+
+      if [[ -n "$compose_workdir" && -n "$compose_service" && -d "$compose_workdir" ]]; then
+        compose_updates+=("${name}|${image}|${compose_workdir}|${compose_service}")
+      else
+        standalone_updates+=("${name}|${image}")
+      fi
+    done < <(docker ps --format '{{.Names}} {{.Image}}')
+
+    # Stop spinner before any interactive prompt
+    stop_spinner
+
+    if [[ ${#compose_updates[@]} -eq 0 && ${#standalone_updates[@]} -eq 0 ]]; then
+      msg_ok "All containers are up-to-date"
+    else
+      local reply
+      for entry in "${compose_updates[@]}"; do
+        IFS='|' read -r name image compose_workdir compose_service <<<"$entry"
+        reply=""
+        if read -r -t 60 -p "${TAB3}Update ${name} (${image}) via Compose? <y/N> (auto-no in 60s): " reply; then
+          echo ""
+        else
+          echo ""
+        fi
+        if [[ "${reply,,}" =~ ^(y|yes)$ ]]; then
+          msg_info "Updating $name"
+          if (cd "$compose_workdir" && $STD docker compose pull "$compose_service" && $STD docker compose up -d "$compose_service"); then
+            msg_ok "Updated $name"
+          else
+            msg_warn "Could not update $name — try manually in $compose_workdir"
+          fi
+        fi
+      done
+
+      for entry in "${standalone_updates[@]}"; do
+        IFS='|' read -r name image <<<"$entry"
+        reply=""
+        if read -r -t 60 -p "${TAB3}Pull new image for ${name} (${image})? <y/N> (auto-no in 60s): " reply; then
+          echo ""
+        else
+          echo ""
+        fi
+        if [[ "${reply,,}" =~ ^(y|yes)$ ]]; then
+          msg_info "Pulling new image for $name"
+          if $STD docker pull "$image"; then
+            msg_ok "New image available for $name — recreate the container to apply the update"
+          else
+            msg_warn "Failed to pull image for $name"
+          fi
+        fi
+      done
     fi
   fi
 
