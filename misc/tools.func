@@ -2523,9 +2523,9 @@ _download_source_tarball() {
 # directory). Extracts <tarball_path> into <workdir>, then copies the contents
 # of that top-level directory into <target>.
 #
-#   - Honors CLEAN_INSTALL=1 (wipes <target> first, but PRESERVES dotfiles
-#     like .env — update scripts rely on config dotfiles surviving the wipe;
-#     deleting them broke every "backup → deploy → source .env" update flow).
+#   - Honors CLEAN_INSTALL=1 (wipes <target> first, dotfiles included — back
+#     up config dotfiles like .env via create_backup and call restore_backup
+#     BEFORE any build step that sources them).
 #   - Does NOT own <workdir>: the caller creates it and is responsible for its
 #     cleanup (typically via a RETURN trap on its tmpdir).
 #   - cp failures are non-fatal here, matching the previous inline behavior.
@@ -2537,7 +2537,7 @@ _deploy_source_tarball() {
 
   mkdir -p "$target"
   if [[ "${CLEAN_INSTALL:-0}" == "1" ]]; then
-    rm -rf "${target:?}/"*
+    find "${target:?}" -mindepth 1 -delete
   fi
 
   tar --no-same-owner -xzf "$tarball" -C "$workdir" || {
@@ -2563,8 +2563,9 @@ _deploy_source_tarball() {
 # a single top-level directory, that directory is stripped (its contents land
 # directly in <target>); otherwise the archive contents are copied as-is.
 #
-#   - Honors CLEAN_INSTALL=1 (wipes <target> first, but PRESERVES dotfiles
-#     like .env — update scripts rely on config dotfiles surviving the wipe).
+#   - Honors CLEAN_INSTALL=1 (wipes <target> first, dotfiles included — back
+#     up config dotfiles like .env via create_backup and call restore_backup
+#     BEFORE any build step that sources them).
 #   - Does NOT own <workdir>: the caller creates it and cleans it up.
 #
 # Returns: 0 on success, 65 on unsupported format, 251 on extraction failure,
@@ -2576,7 +2577,7 @@ _deploy_unpacked_archive() {
 
   mkdir -p "$target"
   if [[ "${CLEAN_INSTALL:-0}" == "1" ]]; then
-    rm -rf "${target:?}/"*
+    find "${target:?}" -mindepth 1 -delete
   fi
 
   if [[ "$filename" == *.zip ]]; then
@@ -9269,10 +9270,8 @@ fetch_and_deploy_from_url() {
 
   mkdir -p "$directory"
 
-  # CLEAN_INSTALL wipe PRESERVES dotfiles (.env etc.) — update scripts rely on
-  # config dotfiles surviving the wipe
   if [[ "${CLEAN_INSTALL:-0}" == "1" ]]; then
-    rm -rf "${directory:?}/"*
+    find "${directory:?}" -mindepth 1 -delete
   fi
 
   local unpack_tmp
