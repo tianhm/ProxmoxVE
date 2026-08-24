@@ -35,3 +35,35 @@ Fixes #
 - [ ] 🌍 **Website update** – Changes to script metadata (PocketBase/website data).
 - [ ] 🔧 **Refactoring / Code Cleanup** – Improves readability or maintainability without changing functionality.
 - [ ] 📝 **Documentation update** – Changes to `README`, `AppName.md`, `CONTRIBUTING.md`, or other docs.
+
+---
+
+## 💥 Breaking Change Advisory (only if you checked "Breaking change")
+
+If this PR changes existing behaviour in a way that may require action before an
+update, add a `breaking-change` advisory block to this PR body. The website and
+the in-container update guard read it to tell operators exactly what to expect,
+what to do first, and — with `action: block` — to stop an update until it's
+handled. Every field is optional; the advisory auto-expires 30 days after merge.
+
+Copy the block out of the comment below, fill it in, and paste it here:
+
+<!--
+```breaking-change
+severity: warning        # info | warning | critical
+action: warn             # warn (default) | block — "block" halts the update until an operator forces it
+expect: One line describing what changes and why it may need action.
+before_update:
+  - First thing to do before updating
+  - Second thing to do before updating
+```
+
+Guidance:
+- Leave this commented (or delete it) for a routine change — no block, no advisory.
+- Use `action: block` only for changes that break or lose data if the operator
+  updates without acting first (e.g. a required manual migration or backup).
+- `expect:` supersedes the auto-scraped summary; keep it to one line.
+- Steps render as a checklist on the site and in the update prompt.
+-->
+
+<!-- The advisory block is only active once it is OUTSIDE this comment. -->
