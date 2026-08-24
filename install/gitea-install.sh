@@ -30,7 +30,7 @@ setup_deb_based() {
   chown -R gitea:gitea /var/lib/gitea/
   chmod -R 750 /var/lib/gitea/
   chown root:gitea /etc/gitea
-  chmod 770 /etc/gitea
+  chmod 750 /etc/gitea
   sudo -u gitea ln -s /var/lib/gitea/data/.ssh/ /etc/gitea/.ssh
   msg_ok "Configured Gitea"
 
