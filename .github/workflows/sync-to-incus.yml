@@ -10,9 +10,9 @@ name: Sync ct/install to Incus
 # script. We therefore only fire a repository_dispatch and let that single
 # source of truth do the work (and auto-approve + merge its own PR).
 #
-# Auth: secrets.PAT_AUTOMERGE (org secret, scope ALL) - the same dedicated-PAT
-# convention the Incus repo already uses to dispatch to core. It needs
-# contents:write on community-scripts/Incus.
+# Auth: the same GitHub App the other workflows here use (vars.APP_ID /
+# secrets.APP_PRIVATE_KEY), with the token scoped to community-scripts/Incus.
+# The app must be installed on the Incus repo with contents:write.
 
 on:
   push:
@@ -32,16 +32,21 @@ jobs:
     if: github.repository == 'community-scripts/ProxmoxVE'
     runs-on: ubuntu-latest
     steps:
+      - name: Generate token (dispatch to Incus)
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: community-scripts
+          repositories: Incus
+
       - name: Trigger Incus sync workflow
         env:
-          GH_TOKEN: ${{ secrets.PAT_AUTOMERGE }}
+          GH_TOKEN: ${{ steps.token.outputs.token }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          if [ -z "${GH_TOKEN:-}" ]; then
-            echo "::error::PAT_AUTOMERGE is not available to this repo."
-            exit 1
-          fi
           echo "Dispatching proxmoxve-scripts-changed to community-scripts/Incus (from ${SOURCE_SHA})"
           gh api repos/community-scripts/Incus/dispatches \
             -X POST \
