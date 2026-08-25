@@ -10,9 +10,11 @@ name: Sync ct/install to Incus
 # script. We therefore only fire a repository_dispatch and let that single
 # source of truth do the work (and auto-approve + merge its own PR).
 #
-# Auth: the same GitHub App the other workflows here use (vars.APP_ID /
-# secrets.APP_PRIVATE_KEY), with the token scoped to community-scripts/Incus.
-# The app must be installed on the Incus repo with contents:write.
+# Auth: the "push-app-to-main" GitHub App (vars.PUSH_MAIN_APP_ID /
+# secrets.PUSH_MAIN_APP_SECRET), scoped to community-scripts/Incus. It has
+# contents:write, which repository_dispatch requires (community-scripts-pr-app
+# only has pull_requests:write, so it cannot dispatch). The app must be
+# installed on the Incus repo.
 
 on:
   push:
@@ -36,8 +38,8 @@ jobs:
         id: token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ vars.PUSH_MAIN_APP_ID }}
+          private-key: ${{ secrets.PUSH_MAIN_APP_SECRET }}
           owner: community-scripts
           repositories: Incus
 
