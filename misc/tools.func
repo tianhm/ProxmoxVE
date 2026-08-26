@@ -9394,6 +9394,8 @@ fetch_and_deploy_from_url() {
 
   if [[ "$file_desc" =~ gzip.*compressed|gzip\ compressed\ data ]]; then
     archive_type="tar"
+  elif [[ "$file_desc" =~ XZ\ compressed\ data ]]; then
+    archive_type="tar"
   elif [[ "$file_desc" =~ Zip.*archive|ZIP\ archive ]]; then
     archive_type="zip"
   elif [[ "$file_desc" =~ Debian.*package|Debian\ binary\ package ]]; then
