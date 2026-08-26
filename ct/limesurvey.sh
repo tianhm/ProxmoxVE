@@ -28,6 +28,13 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
+  if [[ ! -L /etc/apache2/mods-enabled/rewrite.load ]]; then
+    msg_info "Enabling Apache mod_rewrite"
+    $STD a2enmod rewrite
+    systemctl restart apache2
+    msg_ok "Enabled Apache mod_rewrite"
+  fi
+
   setup_mariadb
 
   msg_warn "Application is updated via Web Interface"
