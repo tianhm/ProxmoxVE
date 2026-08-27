@@ -173,7 +173,11 @@ function detect_service() {
     rm -rf "$tmpdir"
     return 1
   fi
-  service=$(grep -oE '/ct/[a-zA-Z0-9._-]+\.sh' "$update_file" 2>/dev/null | head -n1 | sed 's|.*/ct/||; s|\.sh$||')
+
+  service=$(sed -n -E 's/^[[:space:]]*export[[:space:]]+UPDATE_SCRIPT_NAME=["'"'"']?([a-zA-Z0-9._-]+).*/\1/p' "$update_file" | head -n1)
+  [[ -z "$service" ]] && service=$(sed -n -E 's/^[[:space:]]*export[[:space:]]+SCRIPT_SLUG=["'"'"']?([a-zA-Z0-9._-]+).*/\1/p' "$update_file" | head -n1)
+  [[ -z "$service" ]] && service=$(grep -oE '/ct/[a-zA-Z0-9._-]+\.sh' "$update_file" 2>/dev/null | head -n1 | sed 's|.*/ct/||; s|\.sh$||')
+
   rm -rf "$tmpdir"
 }
 
