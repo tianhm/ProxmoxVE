@@ -497,15 +497,25 @@ jobs:
           PR_EOF
             )
 
-            # The label goes on at creation, not in a second call: it is what
+            # Labels go on at creation, not in a second call: they are what
             # exempts the PR from the template check, and that check runs on
             # "opened" — a label added a moment later can arrive too late.
+            #
+            # "keep-open" rather than "automated pr" for that exemption: both
+            # skip the template check, but changelog-pr.yml drops every PR
+            # carrying "automated pr" (it marks its own PR with it), so that
+            # label would keep these bumps out of the changelog entirely.
+            # "update script" and "bugfix" place them under Updated Scripts →
+            # Bug Fixes; the autolabeler cannot do it, since a PR opened with
+            # GITHUB_TOKEN never triggers its pull_request_target run.
             if url=$(gh pr create \
               --title "${slug}: bump Node.js from ${our} to ${upstream}" \
               --body "$body" \
               --base main \
               --head "$branch" \
-              --label "automated pr" 2>/dev/null); then
+              --label "keep-open" \
+              --label "update script" \
+              --label "bugfix" 2>/dev/null); then
               printf '%s|open|%s\n' "$slug" "$url" >>/tmp/drift_prs.txt
             else
               printf '%s|failed||\n' "$slug" >>/tmp/drift_prs.txt
