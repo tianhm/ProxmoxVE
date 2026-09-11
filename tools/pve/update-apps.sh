@@ -178,6 +178,24 @@ function resolve_service_script() {
   return 1
 }
 
+# The retired Gitea mirror. The old entrypoint pulls ct/<app>.sh straight from
+# it and never reaches the update helper that would repair itself, so rewrite it
+# here. Only host and /raw/<kind>/ change; owner, repo and ref are kept.
+function repair_update_url() {
+  local container="$1"
+  pct exec "$container" -- sh -c '
+    [ -f /usr/bin/update ] || exit 1
+    grep -q git.community-scripts.org /usr/bin/update || exit 1
+    sed -i \
+      -e "s|https://git[.]community-scripts[.]org/|https://raw.githubusercontent.com/|g" \
+      -e "s|/raw/branch/|/|g" -e "s|/raw/tag/|/|g" -e "s|/raw/commit/|/|g" \
+      /usr/bin/update
+  ' >/dev/null 2>&1 || return 1
+
+  echo -e "${BL}[INFO]${CL} Repaired update URL (Gitea -> GitHub) in container $container"
+  log_write "Container $container: rewrote the retired Gitea base in /usr/bin/update"
+}
+
 function detect_service() {
   local container="$1"
   local tmpdir update_file
@@ -488,6 +506,9 @@ for container in $CHOICE; do
     echo -e "${BL}[Info]${GN} Waiting For${BL} $container${CL}${GN} To Start ${CL} \n"
     sleep 5
   fi
+
+  #0.5) Rewrite a retired Gitea base before anything reads it.
+  repair_update_url "$container"
 
   #1) Detect service using the service name in the update command
   detect_service $container
