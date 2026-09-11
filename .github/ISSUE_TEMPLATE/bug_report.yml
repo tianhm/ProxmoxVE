@@ -5,15 +5,19 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## ⚠️ **IMPORTANT - READ FIRST**  
-        - 🔍 **Search first:** Before submitting, check if the issue has already been reported or resolved in [closed issues](https://github.com/community-scripts/ProxmoxVE/issues?q=is%3Aissue+is%3Aclosed). If found, comment on that issue instead of creating a new one.  
-        Alternatively, check the **[Discussions](https://github.com/community-scripts/ProxmoxVE/discussions)** under the *"Announcement"* or *"Guide"* categories for relevant information.  
-        - 🔎 If you encounter `[ERROR] in line 23: exit code *: while executing command "$@" > /dev/null 2>&1`, rerun the script with verbose mode before submitting the issue.  
-        - 📜 **Read the script:** Familiarize yourself with the script's content and its purpose. This will help you understand the issue better and provide more relevant information
+        ## ⚠️ **IMPORTANT - READ FIRST**
 
-        Thank you for taking the time to report an issue! Please provide as much detail as possible to help us address the problem efficiently.  
+        **1. Reproduce the issue with verbose mode - this is mandatory.**
+        Set `var_verbose=yes` (or *Advanced Settings → Verbose Mode*) and run the script again.
+        Only a verbose log shows what actually failed - a bare `[ERROR] in line 23: exit code *` tells us nothing.
+        **Reports without a verbose log will most likely be closed.**
 
-     
+        **2. Search before you post.**
+        Check the [closed issues](https://github.com/community-scripts/ProxmoxVE/issues?q=is%3Aissue+is%3Aclosed) and the [Discussions](https://github.com/community-scripts/ProxmoxVE/discussions) (*Announcement* / *Guide*). If it is already known, comment there instead of opening a new issue.
+
+        **3. Read the script.**
+        Knowing what it does makes it much easier to describe the problem - and often to solve it yourself.
+
   - type: input
     id: guidelines
     attributes:
@@ -89,27 +93,31 @@ body:
       value: "💡 **Tip:** If you are using Advanced Settings, please test with Default Settings before submitting an issue."
 
   - type: dropdown
-    id: linux_distribution
+    id: os_distribution
     attributes:
-      label: 🖥️ Which Linux distribution are you using?
+      label: 🖥️ Which Linux distribution is the container running?
       options:
+        - Debian
+        - Ubuntu
         - Alpine
-        - Debian 12
-        - Debian 13
-        - Devuan 5
-        - Ubuntu 22.04
-        - Ubuntu 24.04
-        - Ubuntu 25.04
-        - AlmaLinux 9
-        - AlmaLinux 10
-        - Rocky Linux 9
-        - Rocky Linux 10
-        - CentOS Stream 9
-        - Fedora 42
-        - openSUSE 15
-        - openEuler 25
+        - Devuan
+        - AlmaLinux
+        - Rocky Linux
+        - CentOS Stream
+        - Fedora
+        - openSUSE
+        - openEuler
         - Gentoo
         - Other / not listed
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: 🔢 Which version of that distribution?
+      description: "Run `cat /etc/os-release` inside the container if unsure."
+      placeholder: "e.g. 13 (Debian), 24.04 (Ubuntu), 3.22 (Alpine)"
     validations:
       required: true
 
